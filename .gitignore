@@ -1,0 +1,30 @@
+# Python
+*.pyc
+__pycache__/
+venv/
+*.pyo
+*.pyd
+*.egg-info/
+
+# Django
+*.log
+*.pot
+local_settings.py
+
+# Static files
+/staticfiles/
+media/
+
+# Secret key
+*.secret
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+
+
+# Environment
+.env

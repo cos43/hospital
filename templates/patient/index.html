@@ -1,0 +1,161 @@
+{% extends 'patient/base.html' %}
+{% block title %}
+    就诊大厅
+{% endblock %}
+{% block content %}
+    <div class="row align-items-center">
+        {% verbatim %}
+        <div id="app" class="container">
+             <div class="card  ps-2 pe-2">
+                <div class="card-body">
+                    <el-form ref="addOrderForm" :model="addOrderInfo" :rules="orderRules" label-width="100px"
+                             label-position="right">
+                        <el-form-item label="姓名" prop="name">
+                            <el-input disabled v-model="addOrderInfo.name"/>
+                        </el-form-item>
+                        <el-form-item label="身份证" prop="id_card">
+                            <el-input disabled v-model="addOrderInfo.id_card"/>
+                        </el-form-item>
+                        <el-form-item label="科室" prop="department">
+                            <el-select filterable v-model="addOrderInfo.department" placeholder="请选择科室">
+                                <el-option
+                                        v-for="item in departmentList"
+                                        :key="item.id"
+                                        :label="item.name"
+                                        :value="item.id"></el-option>
+                            </el-select>
+                            <div class="small text-muted">如若有未完成的同科室挂号，则不准许挂新号！</div>
+                        </el-form-item>
+                        <el-form-item label="挂科费">
+                            <el-input disabled v-model="addOrderInfo.registration_fee"></el-input>
+                        </el-form-item>
+                        <el-form-item label="医生" prop="doctor">
+                            <el-select filterable v-model="addOrderInfo.doctor" placeholder="请选择医生">
+                                <el-option
+                                        v-for="item in doctorList"
+                                        :key="item.id"
+                                        :label="item.name"
+                                        :value="item.id">
+                                    <span style="float: left">{{ item.name }}</span>
+                                    <span style="float: right; color: #8492a6; font-size: 13px">剩余名额：{{ item.limit }}</span>
+                                </el-option>
+
+                            </el-select>
+                        </el-form-item>
+
+                        <el-form-item label="病情自述" prop="patient_description">
+                            <el-input type="textarea" v-model="addOrderInfo.patient_description"></el-input>
+                        </el-form-item>
+
+                    </el-form>
+                    <div slot="footer" class="d-flex justify-content-end">
+                        <el-button type="primary" @click="onSubmitOrder">立即挂号</el-button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        {% endverbatim %}
+
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+        new Vue({
+            el: '#app',
+            // watch deep
+            watch: {
+                'addOrderInfo.department': {
+                    handler: function (val, oldVal) {
+                        if (val) {
+                            this.departmentList.forEach(item => {
+                                if (item.id === val) {
+                                    this.addOrderInfo.doctor = ""
+                                    this.getDoctorList(item.id)
+                                    this.addOrderInfo.registration_fee = item.registration_fee
+                                }
+                            })
+                        }
+                    },
+                    deep: true
+                }
+            },
+
+            data() {
+                return {
+                    addOrderInfo: {
+                        id_card: '{{ user.id_card }}',
+                        name: '{{ request.session.username }}',
+                        patient_description: '',
+                        registration_fee: '',
+                        department: '',
+                        doctor: '',
+                    },
+                    // 科室列表
+                    departmentList: [],
+                    doctorList: [],
+                    orderRules: {
+                        name: [{required: true, message: '请输入姓名', trigger: 'blur'}],
+                        id_card: [{required: true, message: '请输入身份证', trigger: 'blur'}],
+                        department: [{required: true, message: '请选中科室', trigger: 'change'}],
+                        doctor: [{required: true, message: '请选中医生', trigger: 'change'}],
+                        patient_description: [{required: true, message: '请输入病情自述', trigger: 'blur'}]
+                    }
+                }
+            },
+            mounted() {
+                this.getDepartmentList()
+            },
+            methods: {
+                getDoctorList(deptId) {
+                    axios.get("{% url 'doctor' %}?deptId=" + deptId).then(res => {
+                        if (res.data.code === 0) {
+                            this.doctorList = res.data.data
+                        } else {
+                            this.NotifyFail(res.data.data)
+                        }
+                    })
+                },
+                getDepartmentList() {
+                    // 获取部门列表
+                    axios.get("{% url 'department' %}").then(res => {
+                        if (res.data.code === 0) {
+                            this.departmentList = res.data.data
+                        } else {
+                            this.NotifyFail(res.data.data)
+                        }
+                    });
+
+                },
+                onSubmitOrder() {
+                    this.$refs.addOrderForm.validate((valid) => {
+                        if (valid) {
+                            // 新添加
+                            axios.post("{% url 'patientIndex' %}", new URLSearchParams(this.addOrderInfo)).then(res => {
+                                if (res.data.code === 0) {
+                                    this.NotifySuc("挂号成功")
+                                } else {
+                                    this.NotifyFail(res.data.msg)
+                                }
+                            })
+                        }
+                    })
+                },
+                // 成功提示
+                NotifySuc(str) {
+                    this.$message({
+                        message: str,
+                        type: 'success'
+                    })
+                },
+                // 错误提示
+                NotifyFail(str) {
+                    this.$message({
+                        message: str,
+                        type: 'warning'
+                    })
+                }
+            }
+        })
+    </script>
+{% endblock %}

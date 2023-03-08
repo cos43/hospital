@@ -1,0 +1,253 @@
+{% extends 'doctor/base.html' %}
+{% block title %}
+    接诊房间
+{% endblock %}
+{% block content %}
+    <div class="row align-items-center">
+        {% verbatim %}
+        <div id="app">
+            <div class="card  ps-2 pe-2">
+                <div class="card-body">
+                    <div class="page-title">
+                        待诊断列表
+                    </div>
+                    <el-table
+                            :data="list"
+                            stripe
+                            style="width: 100%">
+                        <el-table-column
+                                prop="id"
+                                label="就诊号">
+                        </el-table-column>
+
+
+                        <el-table-column
+                                prop="patient_description"
+                                min-width="300"
+                                label="患者描述">
+                        </el-table-column>
+                        <el-table-column
+                                prop="add_time"
+                                label="创建时间"
+                                width="140">
+                        </el-table-column>
+                        <el-table-column
+                                label="开药">
+                            <template slot-scope="{ row }">
+                                <el-button data-bs-toggle="modal" data-bs-target="#medicineModal" size="small"
+                                           @click="onShowMedicine(row)">开药
+                                </el-button>
+                            </template>
+                        </el-table-column>
+
+
+                    </el-table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 开药弹窗-->
+    <div class="modal  modal-blur fade" id="medicineModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">开药</h5>
+                    <button type="button" id="close" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <el-form ref="medicineForm" :model="orderInfo" :rules="orderRules" label-width="80px"
+                             label-position="right">
+
+                        <el-form-item label="医嘱" prop="readme">
+                            <el-input type="textarea" v-model="orderInfo.readme"/>
+                        </el-form-item>
+                        <el-form-item>
+                            <div :key="m.id" v-for="m in medicineSelectList"
+                                 class="d-flex flex-row align-items-center justify-content-between mb-2">
+                                <el-select filterable  v-model="m.medicine" placeholder="请选择药品"
+                                           style="width: 50%;">
+                                    <el-option
+                                            v-for="item in medicineList"
+                                            :key="item.id"
+                                            :label="item.name"
+                                            :value="item.name">
+                                        <span style="float: left">{{ item.name }}</span>
+                                        <span style="float: right; color: #8492a6; font-size: 13px">{{ item.price }}/{{ item.unit }}</span>
+                                    </el-option>
+                                </el-select>
+                                <el-input v-model="m.amount" style="width: 25%;" placeholder="数量"></el-input>
+                                <el-button @click="deleteMedicineSelectList(m.id)" style="margin: 0!important;" circle
+                                           icon="el-icon-minus"></el-button>
+                                <el-button @click="addMedicineSelectList" style="margin: 0!important;" circle
+                                           icon="el-icon-plus"></el-button>
+                            </div>
+                        </el-form-item>
+                    </el-form>
+                    <div class="d-flex flex-row justify-content-center">
+                        <el-button style="width: 100%;" type="primary" @click="onSubmitMedicine">完 成</el-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% endverbatim %}
+
+
+{% endblock %}
+{% block script %}
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    list: [],
+                    userInfo: {
+                        user_id: ''
+                    },
+                    // 查看药品
+                    showMedicine: false,
+                    medicineList: [],
+                    orderInfo: {
+                        orderId: '',
+                        readme: '',
+                        medicine_list: [],
+                        total_cost: '',
+                    },
+                    medicineSelectList: [
+                        {amount: 1, id: 0, medicine: null, price: 0}
+                    ],
+                    orderRules: {
+                        readme: [{required: true, message: '请输入医嘱', trigger: 'blur'}]
+                    },
+                }
+            },
+            mounted() {
+                this.getOrderList()
+            },
+            methods: {
+                // if valid return medicine_list
+                getValidMedicine() {
+                    // 将相同名字的medicine合并,并计算总价
+                    let medicine_list = []
+                    let total_cost = 0
+                    for (let select of this.medicineSelectList) {
+                        const selectedMedicine = this.medicineList.filter(m => m.name === select.medicine)[0]
+                        if (!select.medicine || !select.amount) {
+                            return false
+                        }
+                        total_cost += selectedMedicine.price * select.amount
+                        let exist = medicine_list.filter(m => m.name === selectedMedicine.name)
+                        if (exist.length > 0) {
+                            exist[0].amount += parseInt(select.amount)
+                        } else {
+                            medicine_list.push({
+                                name: selectedMedicine.name,
+                                unit: selectedMedicine.unit,
+                                amount: parseInt(select.amount),
+                                price: selectedMedicine.price,
+                            })
+                        }
+                    }
+                    this.orderInfo.total_cost = total_cost
+                    this.orderInfo.medicine_list = medicine_list
+                    return true
+                },
+                onSubmitMedicine() {
+                    this.$refs.medicineForm.validate((valid) => {
+                        if (valid && this.getValidMedicine()) {
+                            axios.post("{% url 'doctorIndex' %}", this.orderInfo, {
+                                headers: {
+                                    'content-type': 'application/json'
+                                }
+                            }).then(res => {
+                                if (res.data.code === 0) {
+                                    this.NotifySuc('开药成功')
+                                    document.getElementById("close").click()
+                                    this.getOrderList()
+                                } else {
+                                    this.NotifyFail(res.data.data)
+                                }
+                            })
+                        } else {
+                            this.NotifyFail('请检查输入')
+                        }
+                    })
+                },
+                addMedicineSelectList() {
+                    let id = 0
+                    if (this.medicineSelectList.length > 0)
+                        id = this.medicineSelectList[this.medicineSelectList.length - 1].id + 1
+                    this.medicineSelectList.push({medicine: null, amount: 1, id, price: 0})
+                },
+                deleteMedicineSelectList(id) {
+                    this.medicineSelectList = this.medicineSelectList.filter(item => item.id !== id)
+                },
+                getOrderList() {
+                    axios.get("{% url 'order' %}?status=0").then(res => {
+                        if (res.data.code === 0) {
+                            const list = res.data.data
+                            for (const item of list) {
+                                item.add_time = this.formateTime(item.add_time)
+                            }
+                            console.log(list)
+                            this.list = list
+                        } else {
+                            this.NotifyFail(res.data.data)
+                        }
+                    })
+                },
+
+                onShowMedicine(row) {
+                    this.medicineSelectList = [
+                        {amount: 1, id: 0, medicine: null, price: 0}
+                    ];
+                    this.orderInfo.orderId = row.id
+                    axios.get("{% url 'medicine' %}").then(res => {
+                        if (res.data.code === 0) {
+                            this.medicineList = res.data.data
+                            console.log(this.medicineList)
+                            this.showMedicine = true
+                        } else {
+                            this.NotifyFail(res.data.data)
+                        }
+                    })
+                },
+                // 成功提示
+                NotifySuc(str) {
+                    this.$message({
+                        message: str,
+                        type: 'success'
+                    })
+                },
+                // 错误提示
+                NotifyFail(str) {
+                    this.$message({
+                        message: str,
+                        type: 'warning'
+                    })
+                },
+                // 格式化时间
+                formateTime(oriDate) {
+                    if (!oriDate) {
+                        return ''
+                    }
+                    const formateDate = new Date(oriDate)
+                    const year = formateDate.getFullYear()
+                    const month = formateDate.getMonth() + 1
+                    const day = formateDate.getDate()
+                    let h = formateDate.getHours()
+                    let m = formateDate.getMinutes()
+                    let s = formateDate.getSeconds()
+                    h = h >= 10 ? h : `0${h}`
+                    m = m >= 10 ? m : `0${m}`
+                    s = s >= 10 ? s : `0${s}`
+                    return `${year}-${month}-${day} ${h}:${m}`
+                }
+            }
+        })
+    </script>
+{% endblock %}

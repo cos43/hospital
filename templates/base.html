@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}{% endblock %} - 医院系统</title>
+    <link rel="stylesheet" href="{% static 'css/element.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <script src="{% static 'js/vue.js' %}"></script>
+    <script src="{% static 'js/tabler.min.js' %}"></script>
+    <script src="{% static 'js/axios.js' %}"></script>
+    <script src="{% static 'js/element.js' %}"></script>
+    <script>
+        // add header to axios
+        axios.defaults.headers.common['X-CSRFToken'] = "{{ csrf_token }}";
+    </script>
+    <style>
+        html, body {
+            margin: 0;
+        }
+    </style>
+    {% block style %}
+    {% endblock %}
+</head>
+<body>
+<div id="app">
+    {% block template %}
+    {% endblock %}
+</div>
+</body>
+<!-- 脚本 -->
+{% block script %}
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block template %}
+    <div class="wrapper">
+        <aside class="navbar navbar-vertical navbar-expand-lg navbar-dark">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <h1 class="navbar-brand navbar-brand-autodark">
+                    <a href=".">
+                        医院电子平台{% if request.session.role == 'doctor' %} - 医生端{% endif %}
+                    </a>
+                </h1>
+
+                <div class="collapse navbar-collapse" id="navbar-menu">
+
+                    <ul class="navbar-nav pt-lg-3">
+                        <li class="nav-item {% if title == '接诊房间' %}active{% endif %} mb-2">
+                            <a class="nav-link " href="{% url 'doctorIndex' %}" style="height: 50px">
+                                <i class="el-icon-document me-2"></i>
+                                <span class="nav-link-title">接诊房间</span>
+                            </a>
+                        </li>
+                        <li class="nav-item {% if title == '接诊记录' %}active{% endif %}">
+                            <a class="nav-link" href="{% url 'doctorHistory' %}" style="height: 50px">
+                                <i class="el-icon-setting me-2"></i>
+                                <span class="nav-link-title">接诊记录</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+        <header class="navbar navbar-expand-md navbar-light d-none d-lg-flex d-print-none">
+
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-nav d-flex w-100 flex-row align-items-center order-md-last justify-content-between">
+                    <div class="page-title">
+                        {% block title %}{% endblock %}
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown"
+                           aria-label="Open user menu">
+                            <span class="avatar avatar-sm"
+                                  style="background-image: url(https://img0.baidu.com/it/u=1805598630,1661149041&fm=253&app=138&size=w931&n=0&f=JPEG&fmt=auto?sec=1678381200&t=72fb7715ca1059e14513f06f797bca49)"></span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div>{{ request.session.username }}
+                                    <el-divider direction="vertical"></el-divider>工号：{{ request.session.job_number }}
+                                    <el-divider direction="vertical"></el-divider>
+                                    {{ request.session.department }}</div>
+                            </div>
+                            <i class="el-icon-caret-bottom"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <!--- <a href="#" class="dropdown-item">个人资料</a>-->
+
+                            <a href="{% url 'logout' %}" class="dropdown-item">退出</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </header>
+        <div class="page-wrapper">
+            <div class="container-xl">
+                <!-- Page title -->
+                <div class="page-header d-print-none">
+                    {% block content %}
+                    {% endblock %}
+
+                </div>
+            </div>
+            <div class="page-body">
+
+            </div>
+
+        </div>
+    </div>
+{% endblock %}

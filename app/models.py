@@ -173,12 +173,35 @@ class Order(models.Model):
             }
         }
     }
+    physical_examination_schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "title": "体检项目"
+                },
+                "number": {
+                    "type": "number",
+                    "title": "数值"
+                },
+                "index": {
+                    "type": "string",
+                    "title": "指标"
+                },
+
+            }
+        }
+    }
     department = models.ForeignKey(Department, on_delete=models.CASCADE, verbose_name="科室")
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, verbose_name="患者")
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, verbose_name="医生")
     patient_description = models.TextField(max_length=250, verbose_name="患者自述情况")
     readme = models.TextField(max_length=250, verbose_name="医嘱")
     medicine_list = JSONField(schema=medicine_list_schema, verbose_name="药品列表", null=True, blank=True)
+    # 体检指标
+    physical_examination = JSONField(schema=physical_examination_schema, verbose_name="体检指标", null=True, blank=True)
     total_cost = models.FloatField(verbose_name="总费用", default=0)
     status = models.BooleanField(verbose_name="诊断结束", default=False)
     add_time = models.DateTimeField(auto_now_add=True, verbose_name="预约时间")

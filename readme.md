@@ -10,3 +10,5 @@
 * http://127.0.0.1:8000/admin
 * 账户：root
 * 密码：321.qwer
+
+<img width="1448" alt="image" src="https://user-images.githubusercontent.com/31406532/224223731-074dc9f2-9d0d-45e4-9778-b12e74816a25.png">

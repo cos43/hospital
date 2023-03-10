@@ -72,7 +72,7 @@ def generate_department():
 
 
 def generate_doctor(department):
-    for i in range(2):
+    for i in range(10):
         doctor = Doctor()
         doctor.username = get_name()
         doctor.department = department
